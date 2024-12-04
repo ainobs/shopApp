@@ -8,6 +8,9 @@ import com.ecommerce.shopApp.payload.CategoryResponse;
 import com.ecommerce.shopApp.repositories.CategoryRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,8 +29,11 @@ public class CategoryServiceImpl implements CategoryService{
     ModelMapper modelMapper;
 
     @Override
-    public CategoryResponse getAllCategories() {
-        List<Category> categories = categoryRepository.findAll();
+    public CategoryResponse getAllCategories(Integer pageNumber, Integer pageSize) {
+        Pageable pageDetails = PageRequest.of(pageNumber, pageSize);
+        Page<Category> categoryPage = categoryRepository.findAll(pageDetails);
+        List<Category> categories = categoryPage.getContent();
+        //List<Category> categories = categoryRepository.findAll();
         if(categoryRepository.count() == 0) {
             throw new APIException("No category found. Try adding a category");
         }
@@ -36,6 +42,11 @@ public class CategoryServiceImpl implements CategoryService{
                 .toList();
         CategoryResponse  categoryResponse = new CategoryResponse();
         categoryResponse.setContent(categoryDTO);
+        categoryResponse.setPageNumber(categoryPage.getNumber());
+        categoryResponse.setPageSize(categoryPage.getSize());
+        categoryResponse.setTotalElements((int) categoryPage.getTotalElements());
+        categoryResponse.setTotalPages(categoryPage.getTotalPages());
+        categoryResponse.setLastPage(categoryPage.isLast());
         return categoryResponse;
     }
 
